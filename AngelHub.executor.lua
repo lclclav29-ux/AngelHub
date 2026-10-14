@@ -1,4 +1,4 @@
--- AngelHub executor edition | Build #1.01 Red Edition
+-- AngelHub executor edition | Build #1.01 Reference Edition
 -- Client features can be overridden by the game's server and character scripts.
 local Players = game:GetService('Players')
 local Run = game:GetService('RunService')
@@ -33,18 +33,18 @@ local function make(kind,parentObject,props)
  o.Parent=parentObject
  return o
 end
-local function round(o) make('UICorner',o,{CornerRadius=UDim.new(0,10)}) end
-local accent=Color3.fromRGB(244,61,77)
-local white=Color3.fromRGB(240,240,250)
+local function round(o) make('UICorner',o,{CornerRadius=UDim.new(0,7)}) end
+local accent=Color3.fromRGB(205,97,118)
+local white=Color3.fromRGB(224,207,215)
 local gui=make('ScreenGui',parent,{Name='AngelHubExecutor',ResetOnSpawn=false,ZIndexBehavior=Enum.ZIndexBehavior.Sibling})
-local win=make('Frame',gui,{Size=UDim2.fromOffset(540,500),Position=UDim2.fromScale(.5,.5),AnchorPoint=Vector2.new(.5,.5),BackgroundColor3=Color3.fromRGB(19,16,19),BackgroundTransparency=1,BorderSizePixel=0})
+local win=make('Frame',gui,{Size=UDim2.fromOffset(720,480),Position=UDim2.fromScale(.5,.5),AnchorPoint=Vector2.new(.5,.5),BackgroundColor3=Color3.fromRGB(22,12,17),BackgroundTransparency=1,BorderSizePixel=0})
 round(win)
 for _,layer in ipairs({{12,.88},{24,.94}}) do
  local shadow=make('Frame',win,{Position=UDim2.fromOffset(-layer[1]/2,4),Size=UDim2.new(1,layer[1],1,layer[1]),BackgroundTransparency=1,BorderSizePixel=0,ZIndex=0})
  round(shadow)
  make('UIStroke',shadow,{Color=Color3.fromRGB(0,0,0),Thickness=layer[1],Transparency=layer[2]})
 end
-make('UIGradient',win,{Color=ColorSequence.new(Color3.fromRGB(40,20,27),Color3.fromRGB(15,15,18)),Rotation=100})
+make('UIGradient',win,{Color=ColorSequence.new(Color3.fromRGB(36,15,24),Color3.fromRGB(19,11,16)),Rotation=100})
 local function animate(o,props,duration)
  if not active then return end
  local previous=pendingTweens[o]
@@ -53,20 +53,24 @@ local function animate(o,props,duration)
  pendingTweens[o]=tween
  tween:Play()
 end
-make('UIStroke',win,{Color=accent,Transparency=.4})
+make('UIStroke',win,{Color=accent,Transparency=.78})
 local scale=make('UIScale',win,{Scale=1})
 local function text(parentObject,value,x,y,w,h,size)
  return make('TextLabel',parentObject,{Text=value,Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,h),BackgroundTransparency=1,TextColor3=white,TextSize=size or 14,Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left})
 end
-local title=text(win,'ANGEL HUB   /   BUILD #1.01 • RED EDITION',18,10,430,40,20)
+local title=text(win,'Angels Hub',18,14,150,30,18)
+text(win,'#1.01  /  REFERENCE',18,46,150,20,10).TextColor3=accent
+local divider=make('Frame',win,{Position=UDim2.fromOffset(178,0),Size=UDim2.new(0,1,1,0),BackgroundColor3=accent,BackgroundTransparency=.88,BorderSizePixel=0})
+make('Frame',win,{Position=UDim2.fromOffset(190,59),Size=UDim2.fromOffset(512,1),BackgroundColor3=accent,BackgroundTransparency=.88,BorderSizePixel=0})
+local pageTitle=text(win,'Движение',452,16,194,28,14)
 title.Active=true
-local status=text(win,'RightShift / AH — меню • End / OFF — отключить',18,461,504,26,12)
-local body=make('Frame',win,{Position=UDim2.fromOffset(18,118),Size=UDim2.fromOffset(504,332),BackgroundTransparency=1})
+local status=text(win,'RightShift / AH — меню • End / OFF — отключить',196,442,504,24,12)
+local body=make('Frame',win,{Position=UDim2.fromOffset(196,78),Size=UDim2.fromOffset(504,350),BackgroundTransparency=1})
 local function button(parentObject,value,x,y,w,h,fn)
- local b=make('TextButton',parentObject,{Text=value,Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,h),BackgroundColor3=Color3.fromRGB(48,25,31),TextColor3=white,TextSize=14,Font=Enum.Font.GothamMedium,BorderSizePixel=0})
+ local b=make('TextButton',parentObject,{Text=value,Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,h),BackgroundColor3=Color3.fromRGB(35,19,26),TextColor3=white,TextSize=13,Font=Enum.Font.GothamMedium,BorderSizePixel=0})
  round(b)
- connect(b.MouseEnter,function() animate(b,{BackgroundColor3=Color3.fromRGB(88,29,40)}) end)
- connect(b.MouseLeave,function() animate(b,{BackgroundColor3=Color3.fromRGB(48,25,31)}) end)
+ connect(b.MouseEnter,function() animate(b,{BackgroundColor3=Color3.fromRGB(55,27,38)}) end)
+ connect(b.MouseLeave,function() animate(b,{BackgroundColor3=Color3.fromRGB(35,19,26)}) end)
  connect(b.Activated,function()
   if active then fn() end
  end)
@@ -79,19 +83,69 @@ end
 local function selectPage(name)
  if not authorized then return end
  for key,p in pairs(pages) do p.Visible=key==name end
- for key,b in pairs(navigation) do b.TextColor3=key==name and accent or white end
+ pageTitle.Text=name
+ for key,b in pairs(navigation) do
+  b.TextColor3=key==name and accent or white
+  animate(b,{BackgroundColor3=key==name and Color3.fromRGB(58,26,38) or Color3.fromRGB(35,19,26)})
+ end
  animate(pages[name],{Position=UDim2.fromOffset(0,0)},.2)
 end
-local tabbar=make('Frame',win,{Position=UDim2.fromOffset(18,66),Size=UDim2.fromOffset(504,40),BackgroundTransparency=1,Visible=false})
+local tabbar=make('Frame',win,{Position=UDim2.fromOffset(18,112),Size=UDim2.fromOffset(146,180),BackgroundTransparency=1,Visible=false})
 for i,name in ipairs({'Движение','Визуал','Телепорт'}) do
- navigation[name]=button(tabbar,name,(i-1)*172,0,160,36,function()
+ navigation[name]=button(tabbar,name,0,(i-1)*48,146,38,function()
   pages[name].Position=UDim2.fromOffset(0,8)
   selectPage(name)
  end)
 end
+local function card(page,x,y,w,h,heading)
+ local panel=make('Frame',page,{Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,h),BackgroundColor3=Color3.fromRGB(29,15,22),BorderSizePixel=0})
+ round(panel)
+ make('UIStroke',panel,{Color=accent,Transparency=.86})
+ text(panel,heading,12,8,w-24,26,13).TextColor3=accent
+end
+card(pages['Движение'],0,0,246,258,'Управление персонажем')
+card(pages['Движение'],258,0,246,258,'Параметры движения')
+card(pages['Визуал'],0,0,246,236,'Подсветка игроков')
+card(pages['Визуал'],258,0,246,236,'Камера')
+card(pages['Телепорт'],0,0,504,238,'Координаты и позиция')
+local featureHeading=text(win,'FEATURES',20,82,140,20,10)
+featureHeading.TextColor3=accent
+local profile=make('Frame',win,{Position=UDim2.fromOffset(14,392),Size=UDim2.fromOffset(150,70),BackgroundColor3=Color3.fromRGB(31,17,24),BorderSizePixel=0})
+round(profile)
+text(profile,player.DisplayName or player.Name or 'Игрок',12,10,126,22,13)
+text(profile,'●  Сессия активна',12,35,126,20,10).TextColor3=accent
+local search=make('TextBox',win,{Name='HubSearch',Position=UDim2.fromOffset(196,16),Size=UDim2.fromOffset(234,28),BackgroundColor3=Color3.fromRGB(35,19,26),BorderSizePixel=0,PlaceholderText='Поиск функций...',Text='',TextSize=12,TextColor3=white,PlaceholderColor3=accent,Font=Enum.Font.Gotham,ClearTextOnFocus=false})
+round(search)
+local searchTerms={['Движение']='движение скорость прыжок полёт speed jump fly', ['Визуал']='визуал esp камера первое лицо camera', ['Телепорт']='телепорт позиция координаты teleport position'}
+local function lowerText(value)
+ local result={}
+ for _,code in utf8.codes(value) do
+  if code>=1040 and code<=1071 then code=code+32 elseif code==1025 then code=1105 end
+  result[#result+1]=utf8.char(code)
+ end
+ return table.concat(result):lower()
+end
+local function filterNavigation()
+ if not authorized then return end
+ local query=lowerText(search.Text:match('^%s*(.-)%s*$'))
+ local first,slot=nil,0
+ for _,name in ipairs({'Движение','Визуал','Телепорт'}) do
+  local matches=query=='' or searchTerms[name]:find(query,1,true)~=nil
+  navigation[name].Visible=matches
+  if matches then
+   navigation[name].Position=UDim2.fromOffset(0,slot*48)
+   slot=slot+1
+   first=first or name
+  end
+ end
+ if query~='' and first then selectPage(first) end
+ if not first then status.Text='Ничего не найдено. Очисти поиск.'
+ else status.Text='RightShift / AH — меню • End / OFF — отключить' end
+end
+connect(search:GetPropertyChangedSignal('Text'),filterNavigation)
 local currentPage=pages['Движение']
 local function field(value,x,y,w)
- local b=make('TextBox',currentPage,{Text=tostring(value),PlaceholderText='Число',Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,38),BackgroundColor3=Color3.fromRGB(30,23,28),TextColor3=white,TextSize=14,Font=Enum.Font.Gotham,ClearTextOnFocus=false,BorderSizePixel=0})
+ local b=make('TextBox',currentPage,{Text=tostring(value),PlaceholderText='Число',Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,38),BackgroundColor3=Color3.fromRGB(30,17,24),TextColor3=white,TextSize=14,Font=Enum.Font.Gotham,ClearTextOnFocus=false,BorderSizePixel=0})
  round(b)
  return b
 end
@@ -120,6 +174,7 @@ local function applyMovement()
  if human.UseJumpPower then human.JumpPower=jumpOn and jump or savedJump
  else human.JumpHeight=jumpOn and jump*jump/(2*math.max(workspace.Gravity,1)) or savedJumpHeight end
 end
+local toggleRenderers={}
 local function toggle(value,x,y,w,fn,getState)
  local on=false
  local b
@@ -132,18 +187,29 @@ local function toggle(value,x,y,w,fn,getState)
   on=nextOn
   b.Text=value..': '..(on and 'ВКЛ' or 'ВЫКЛ')
   b.TextColor3=on and accent or white
+  if toggleRenderers[b] then toggleRenderers[b](on) end
  end)
+ b.TextXAlignment=Enum.TextXAlignment.Left
+ make('UIPadding',b,{PaddingLeft=UDim.new(0,10)})
+ local track=make('Frame',b,{Position=UDim2.new(1,-50,.5,-8),Size=UDim2.fromOffset(36,16),BackgroundColor3=Color3.fromRGB(63,39,49),BorderSizePixel=0})
+ round(track)
+ local dot=make('Frame',track,{Position=UDim2.fromOffset(2,2),Size=UDim2.fromOffset(12,12),BackgroundColor3=white,BorderSizePixel=0})
+ round(dot)
+ toggleRenderers[b]=function(enabled)
+  animate(track,{BackgroundColor3=enabled and accent or Color3.fromRGB(63,39,49)})
+  animate(dot,{Position=UDim2.fromOffset(enabled and 22 or 2,2)})
+ end
  return b
 end
-local speedField=field(speed,350,0,154)
-local jumpField=field(jump,350,50,154)
-toggle('Скорость',0,0,338,function(on) speedOn=on; applyMovement() end)
-toggle('Прыжок',0,50,338,function(on) jumpOn=on; applyMovement() end)
-local flyButton=toggle('Полёт (WASD / Space / Ctrl)',0,100,338,function(on)
+local speedField=field(speed,270,50,222)
+local jumpField=field(jump,270,110,222)
+toggle('Скорость',12,50,222,function(on) speedOn=on; applyMovement() end)
+toggle('Прыжок',12,110,222,function(on) jumpOn=on; applyMovement() end)
+local flyButton=toggle('Полёт',12,170,222,function(on)
  if on then return startFlight() end
  stopFlight()
 end,function() return flightOn end)
-local flyField=field(flightSpeed,350,100,154)
+local flyField=field(flightSpeed,270,170,222)
 for _,item in ipairs({{speedField,1,150,function(v) speed=v; applyMovement() end},{jumpField,1,200,function(v) jump=v; applyMovement() end},{flyField,1,200,function(v) flightSpeed=v end}}) do
  connect(item[1].FocusLost,function()
   local v=tonumber(item[1].Text)
@@ -177,34 +243,38 @@ local function refreshESP()
   if not targets[p] then h:Destroy(); highlights[p]=nil end
  end
 end
-text(pages['Движение'],'Все функции выключены при входе. Включай по одной.',0,177,504,30,12)
+text(pages['Движение'],'WASD — полёт  /  Space — вверх  /  Ctrl — вниз',12,220,480,22,11)
+text(pages['Движение'],'Все функции выключены при входе.',12,268,480,24,11)
 currentPage=pages['Визуал']
-toggle('ESP игроков',0,0,246,function(on) espOn=on; refreshESP() end)
+toggle('ESP игроков',12,50,222,function(on) espOn=on; refreshESP() end)
 local originalMode=player.CameraMode
-toggle('Первое лицо',258,0,246,function(on) player.CameraMode=on and Enum.CameraMode.LockFirstPerson or originalMode end)
-text(currentPage,'Красные контуры • до 24 игроков • экономный режим',0,65,504,36,12)
-text(currentPage,'Приветствуем в ангелс хаб',0,120,504,36,20)
+toggle('Первое лицо',270,50,222,function(on) player.CameraMode=on and Enum.CameraMode.LockFirstPerson or originalMode end)
+text(currentPage,'До 24 игроков',12,112,222,30,12)
+text(currentPage,'Переиспользование контуров',12,145,222,30,11)
+text(currentPage,'Локальная камера',270,112,222,30,12)
 currentPage=pages['Телепорт']
-text(currentPage,'Телепорт по координатам X / Y / Z',0,0,504,24)
-local x,y,z=field(0,0,42,110),field(10,120,42,110),field(0,240,42,110)
-button(currentPage,'Телепорт',360,42,144,38,function()
+text(currentPage,'Введи X / Y / Z',12,42,480,24)
+local x,y,z=field(0,12,82,100),field(10,122,82,100),field(0,232,82,100)
+button(currentPage,'Телепорт',344,82,148,38,function()
  if not authorized then return end
  local a,b,c=tonumber(x.Text),tonumber(y.Text),tonumber(z.Text)
  if not a or not b or not c or a~=a or b~=b or c~=c or math.abs(a)>1000000 or math.abs(b)>1000000 or math.abs(c)>1000000 then status.Text='Координаты: числа от −1000000 до 1000000'; return end
  if player.Character and root then player.Character:PivotTo(CFrame.new(a,b,c)); status.Text='Телепорт выполнен локально' end
 end)
-button(currentPage,'Запомнить позицию',0,100,246,40,function()
+button(currentPage,'Запомнить позицию',12,144,234,40,function()
  if not authorized then return end
  if root then local p=root.Position; x.Text=tostring(math.round(p.X)); y.Text=tostring(math.round(p.Y)); z.Text=tostring(math.round(p.Z)) end
 end)
-button(body,'ОТКЛЮЧИТЬ СКРИПТ',0,282,504,40,function() shutdown() end)
+button(body,'ОТКЛЮЧИТЬ СКРИПТ',0,302,504,36,function() shutdown() end)
 local gate
 local mini=false
-button(win,'−',486,14,36,30,function()
+button(win,'−',660,16,36,28,function()
  mini=not mini
+ profile.Visible=not mini
+ featureHeading.Visible=not mini
  body.Visible=authorized and not mini; tabbar.Visible=authorized and not mini; status.Visible=not mini
  if gate then gate.Visible=not authorized and not mini end
- win.Size=UDim2.fromOffset(540,mini and 54 or 500)
+ win.Size=UDim2.fromOffset(720,mini and 64 or 480)
 end)
 button(gui,'AH',14,14,46,40,function() win.Visible=not win.Visible end)
 button(gui,'OFF',70,14,54,40,function() shutdown() end)
@@ -226,7 +296,8 @@ local function bind(character)
  bindGeneration=bindGeneration+1
  local generation=bindGeneration
  stopFlight()
- flyButton.Text='Полёт (WASD / Space / Ctrl): ВЫКЛ'
+ flyButton.Text='Полёт: ВЫКЛ'
+ if toggleRenderers[flyButton] then toggleRenderers[flyButton](false) end
  flyButton.TextColor3=white
  human=nil; root=nil
  local h=character:WaitForChild('Humanoid',10)
@@ -266,13 +337,14 @@ connect(Run.RenderStepped,function(dt)
  local camera=workspace.CurrentCamera
  if camera and (camera~=lastCamera or camera.ViewportSize~=lastViewport) then
   lastCamera=camera; lastViewport=camera.ViewportSize
-  scale.Scale=math.max(.1,math.min(1,(lastViewport.X-24)/540,(lastViewport.Y-24)/500))
+  scale.Scale=math.max(.1,math.min(1,(lastViewport.X-24)/720,(lastViewport.Y-24)/480))
  end
  elapsed=elapsed+dt
  if elapsed>=2 then elapsed=0; if espOn then refreshESP() end end
  if flightOn and (not root or not root.Parent or not human or not human.Parent or human.Health<=0) then
   stopFlight()
-  flyButton.Text='Полёт (WASD / Space / Ctrl): ВЫКЛ'
+  flyButton.Text='Полёт: ВЫКЛ'
+ if toggleRenderers[flyButton] then toggleRenderers[flyButton](false) end
  end
  if flightOn and velocity and orientation and camera then
   local direction=human.MoveDirection
@@ -291,11 +363,11 @@ end)
 
 -- Local key gate: a shared client-side key is an entry screen, not server authentication.
 body.Visible=false
-gate=make('Frame',win,{Position=UDim2.fromOffset(28,88),Size=UDim2.fromOffset(484,330),BackgroundTransparency=1})
+gate=make('Frame',win,{Position=UDim2.fromOffset(206,88),Size=UDim2.fromOffset(484,330),BackgroundTransparency=1})
 text(gate,'ACCESS CONTROL',0,0,484,24,12).TextColor3=accent
 text(gate,'Добро пожаловать',0,38,484,44,27)
 text(gate,'Введи ключ доступа к Angels Hub',0,85,484,30,14)
-local keyInput=make('TextBox',gate,{Name='AccessKey',PlaceholderText='Ключ доступа',Text='',ClearTextOnFocus=false,Position=UDim2.fromOffset(0,137),Size=UDim2.fromOffset(484,46),BackgroundColor3=Color3.fromRGB(30,23,28),TextColor3=white,TextSize=17,Font=Enum.Font.Gotham,BorderSizePixel=0})
+local keyInput=make('TextBox',gate,{Name='AccessKey',PlaceholderText='Ключ доступа',Text='',ClearTextOnFocus=false,Position=UDim2.fromOffset(0,137),Size=UDim2.fromOffset(484,46),BackgroundColor3=Color3.fromRGB(30,17,24),TextColor3=white,TextSize=17,Font=Enum.Font.Gotham,BorderSizePixel=0})
 round(keyInput)
 local keyMessage=text(gate,'Ключ чувствителен к регистру.',0,251,484,52,12)
 local function playGreeting()
@@ -345,10 +417,11 @@ local function unlock()
  body.Visible=not mini
  tabbar.Visible=not mini
  selectPage('Движение')
+ filterNavigation()
  animate(win,{BackgroundColor3=Color3.fromRGB(26,17,22)},.35)
  playGreeting()
 end
 button(gate,'ВОЙТИ В ANGELS HUB   →',0,199,484,44,unlock)
 connect(keyInput.FocusLost,function(enterPressed) if enterPressed then unlock() end end)
-text(gate,'RED EDITION  /  #1.01',0,308,484,22,11).TextColor3=accent
+text(gate,'REFERENCE EDITION  /  #1.01',0,308,484,22,11).TextColor3=accent
 animate(win,{BackgroundTransparency=0},.3)
