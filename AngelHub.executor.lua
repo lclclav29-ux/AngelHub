@@ -1,4 +1,4 @@
--- AngelHub executor edition | Build #1.01
+-- AngelHub executor edition | Build #1.01 hotfix 1
 -- Client features can be overridden by the game's server and character scripts.
 local Players = game:GetService('Players')
 local Run = game:GetService('RunService')
@@ -8,6 +8,9 @@ local parent = player:WaitForChild('PlayerGui')
 local old = parent:FindFirstChild('AngelHubExecutor')
 if old then old:Destroy() end
 local connections, highlights = {}, {}
+local active = true
+local shutdown
+local bindGeneration = 0
 local speedOn, jumpOn, flightOn, espOn = false, false, false, false
 local speed, jump, flightSpeed = 32, 75, 55
 local root, human, savedSpeed, savedJump, savedJumpHeight, savedRotate
@@ -34,9 +37,9 @@ local scale=make('UIScale',win,{Scale=1})
 local function text(parentObject,value,x,y,w,h,size)
  return make('TextLabel',parentObject,{Text=value,Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,h),BackgroundTransparency=1,TextColor3=white,TextSize=size or 14,Font=Enum.Font.Gotham,TextXAlignment=Enum.TextXAlignment.Left})
 end
-local title=text(win,'ANGEL HUB   /   BUILD #1.01',18,10,430,40,20)
+local title=text(win,'ANGEL HUB   /   BUILD #1.01 • FIX 1',18,10,430,40,20)
 title.Active=true
-local status=text(win,'Готово • RightShift / AH — открыть меню',18,401,504,26,12)
+local status=text(win,'RightShift / AH — меню • End / OFF — отключить',18,401,504,26,12)
 local body=make('Frame',win,{Position=UDim2.fromOffset(18,60),Size=UDim2.fromOffset(504,332),BackgroundTransparency=1})
 local function button(parentObject,value,x,y,w,h,fn)
  local b=make('TextButton',parentObject,{Text=value,Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,h),BackgroundColor3=Color3.fromRGB(42,36,66),TextColor3=white,TextSize=14,Font=Enum.Font.GothamMedium,BorderSizePixel=0})
@@ -62,8 +65,8 @@ local function startFlight()
  savedRotate=human.AutoRotate
  human.AutoRotate=false
  attachment=make('Attachment',root,{Name='AngelHubFlight'})
- velocity=make('LinearVelocity',root,{Attachment0=attachment,RelativeTo=Enum.ActuatorRelativeTo.World,MaxForce=math.huge,VectorVelocity=Vector3.zero})
- orientation=make('AlignOrientation',root,{Attachment0=attachment,Mode=Enum.OrientationAlignmentMode.OneAttachment,MaxTorque=math.huge,Responsiveness=20})
+ velocity=make('LinearVelocity',root,{Attachment0=attachment,RelativeTo=Enum.ActuatorRelativeTo.World,MaxForce=math.clamp(root.AssemblyMass * 2500, 10000, 1000000),VectorVelocity=Vector3.zero})
+ orientation=make('AlignOrientation',root,{Attachment0=attachment,Mode=Enum.OrientationAlignmentMode.OneAttachment,MaxTorque=1000000,Responsiveness=20})
  flightOn=true
  return true
 end
@@ -110,12 +113,23 @@ local function clearESP()
  table.clear(highlights)
 end
 local function refreshESP()
- clearESP()
- if not espOn then return end
+ if not active or not espOn then clearESP(); return end
+ local targets = {}
+ local count = 0
  for _,p in ipairs(Players:GetPlayers()) do
-  if p~=player and p.Character then
-   highlights[p]=make('Highlight',gui,{Adornee=p.Character,FillColor=purple,OutlineColor=white,FillTransparency=.75,OutlineTransparency=0,DepthMode=Enum.HighlightDepthMode.AlwaysOnTop})
+  if p~=player and p.Character and count<24 then
+   count=count+1
+   targets[p]=p.Character
+   local h=highlights[p]
+   if not h then
+    h=make('Highlight',gui,{FillColor=purple,OutlineColor=white,FillTransparency=.75,OutlineTransparency=0,DepthMode=Enum.HighlightDepthMode.AlwaysOnTop})
+    highlights[p]=h
+   end
+   h.Adornee=p.Character
   end
+ end
+ for p,h in pairs(highlights) do
+  if not targets[p] then h:Destroy(); highlights[p]=nil end
  end
 end
 toggle('ESP игроков',0,150,246,function(on) espOn=on; refreshESP() end)
@@ -131,7 +145,7 @@ end)
 button(body,'Запомнить позицию',0,282,246,40,function()
  if root then local p=root.Position; x.Text=tostring(math.round(p.X)); y.Text=tostring(math.round(p.Y)); z.Text=tostring(math.round(p.Z)) end
 end)
-button(body,'Закрыть и восстановить',258,282,246,40,function() gui:Destroy() end)
+button(body,'ОТКЛЮЧИТЬ СКРИПТ',258,282,246,40,function() shutdown() end)
 local mini=false
 button(win,'−',486,14,36,30,function()
  mini=not mini
@@ -139,6 +153,7 @@ button(win,'−',486,14,36,30,function()
  win.Size=UDim2.fromOffset(540,mini and 54 or 440)
 end)
 button(gui,'AH',14,14,46,40,function() win.Visible=not win.Visible end)
+button(gui,'OFF',70,14,54,40,function() shutdown() end)
 local drag,start,startPos,touch
 connect(title.InputBegan,function(input)
  if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then drag=true; start=input.Position; startPos=win.Position; touch=input.UserInputType==Enum.UserInputType.Touch and input or nil end
@@ -147,15 +162,22 @@ connect(UIS.InputChanged,function(input)
  if drag and (input==touch or (not touch and input.UserInputType==Enum.UserInputType.MouseMovement)) then local d=input.Position-start; win.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+d.X,startPos.Y.Scale,startPos.Y.Offset+d.Y) end
 end)
 connect(UIS.InputEnded,function(input) if input==touch or input.UserInputType==Enum.UserInputType.MouseButton1 then drag=false end end)
-connect(UIS.InputBegan,function(input,processed) if not processed and input.KeyCode==Enum.KeyCode.RightShift then win.Visible=not win.Visible end end)
+connect(UIS.InputBegan,function(input,processed)
+ if processed then return end
+ if input.KeyCode==Enum.KeyCode.End then shutdown(); return end
+ if input.KeyCode==Enum.KeyCode.RightShift then win.Visible=not win.Visible end
+end)
 local function bind(character)
+ if not active then return end
+ bindGeneration=bindGeneration+1
+ local generation=bindGeneration
  stopFlight()
  flyButton.Text='Полёт (WASD / Space / Ctrl): ВЫКЛ'
  flyButton.TextColor3=white
  human=nil; root=nil
  local h=character:WaitForChild('Humanoid',10)
  local r=character:WaitForChild('HumanoidRootPart',10)
- if not h or not r or character~=player.Character then return end
+ if not active or generation~=bindGeneration or not h or not r or character~=player.Character then return end
  human=h; root=r
  savedSpeed=h.WalkSpeed; savedJump=h.JumpPower; savedJumpHeight=h.JumpHeight
  applyMovement()
@@ -163,11 +185,38 @@ end
 connect(player.CharacterAdded,function(c) task.spawn(bind,c) end)
 if player.Character then task.spawn(bind,player.Character) end
 local elapsed=0
+local lastCamera, lastViewport
+shutdown=function()
+ if not active then return end
+ active=false
+ bindGeneration=bindGeneration+1
+ for _,c in ipairs(connections) do c:Disconnect() end
+ table.clear(connections)
+ stopFlight()
+ clearESP()
+ speedOn=false; jumpOn=false
+ if human and human.Parent then
+  human.WalkSpeed=savedSpeed
+  human.JumpPower=savedJump
+  human.JumpHeight=savedJumpHeight
+ end
+ player.CameraMode=originalMode
+ if gui.Parent then gui:Destroy() end
+end
+connect(gui.Destroying,shutdown)
 connect(Run.RenderStepped,function(dt)
+ if not active then return end
  local camera=workspace.CurrentCamera
- if camera then scale.Scale=math.max(.1,math.min(1,(camera.ViewportSize.X-24)/540,(camera.ViewportSize.Y-24)/440)) end
+ if camera and (camera~=lastCamera or camera.ViewportSize~=lastViewport) then
+  lastCamera=camera; lastViewport=camera.ViewportSize
+  scale.Scale=math.max(.1,math.min(1,(lastViewport.X-24)/540,(lastViewport.Y-24)/440))
+ end
  elapsed=elapsed+dt
- if elapsed>=1 then elapsed=0; refreshESP() end
+ if elapsed>=2 then elapsed=0; if espOn then refreshESP() end end
+ if flightOn and (not root or not root.Parent or not human or not human.Parent or human.Health<=0) then
+  stopFlight()
+  flyButton.Text='Полёт (WASD / Space / Ctrl): ВЫКЛ'
+ end
  if flightOn and velocity and orientation and camera then
   local direction=human.MoveDirection
   if not UIS:GetFocusedTextBox() then
@@ -181,10 +230,4 @@ connect(Run.RenderStepped,function(dt)
   velocity.VectorVelocity=direction.Magnitude>0 and direction.Unit*flightSpeed or Vector3.zero
   orientation.CFrame=camera.CFrame.Rotation
  end
-end)
-connect(gui.Destroying,function()
- stopFlight(); clearESP()
- speedOn=false; jumpOn=false; applyMovement()
- player.CameraMode=originalMode
- for _,c in ipairs(connections) do c:Disconnect() end
 end)
